@@ -19,6 +19,10 @@ func TestPriorityQueue(t *testing.T) {
 		t.Fatalf("can't connect to redis: %v", err)
 	}
 
+	defer func() {
+		rds.Del(ctx, "test_queue")
+	}()
+
 	queue := NewPriorityQueue("test_queue", rds)
 
 	// push some keys to top of the queue
@@ -86,4 +90,28 @@ func TestPriorityQueue(t *testing.T) {
 	if count != 3 {
 		t.Fatalf("expect 3, bug got: %d", count)
 	}
+
+	// test increase
+	if err := queue.Increase(ctx, "key4", 4); err != nil {
+		t.Fatalf("something went wrong: %v", err)
+	}
+
+	key, err = queue.Head(ctx)
+	if err != nil {
+		t.Fatalf("something went wrong: %v", err)
+	}
+
+	if key != "key4" {
+		t.Fatalf("expect key: key4, got: %s", key)
+	}
+
+	key, err = queue.Tail(ctx)
+	if err != nil {
+		t.Fatalf("something went wrong: %v", err)
+	}
+
+	if key != "key2" {
+		t.Fatalf("expect key: key2, got: %s", key)
+	}
+
 }
